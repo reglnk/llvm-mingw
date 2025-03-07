@@ -68,6 +68,7 @@ fi
 
 if command -v ninja >/dev/null; then
     CMAKE_GENERATOR="Ninja"
+	CMAKE_BUILD_RULES_FILE="build.ninja"
 else
     : ${CORES:=$(nproc 2>/dev/null)}
     : ${CORES:=$(sysctl -n hw.ncpu 2>/dev/null)}
@@ -78,6 +79,7 @@ else
         CMAKE_GENERATOR="MSYS Makefiles"
         ;;
     esac
+	CMAKE_BUILD_RULES_FILE="Makefile"
 fi
 
 cd llvm-project/compiler-rt
@@ -99,8 +101,8 @@ for arch in $ARCHS; do
     [ -z "$CLEAN" ] || rm -rf build-$arch$BUILD_SUFFIX
     mkdir -p build-$arch$BUILD_SUFFIX
     cd build-$arch$BUILD_SUFFIX
-    [ -n "$NO_RECONF" ] || rm -rf CMake*
-    cmake \
+    [ -n "$FORCE_RECONF" ] && rm -rf CMake*
+    [ ! -f CMakeCache.txt ] || [ ! -f "$CMAKE_BUILD_RULES_FILE" ] && cmake \
         ${CMAKE_GENERATOR+-G} "$CMAKE_GENERATOR" \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX="$CLANG_RESOURCE_DIR" \
